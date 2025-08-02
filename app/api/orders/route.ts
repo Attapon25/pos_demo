@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import type { OrderRequest } from "@/lib/types"
+import { PrismaClient } from "@prisma/client"
 
+const prisma = new PrismaClient()
 export async function POST(request: NextRequest) {
   try {
     const body: OrderRequest = await request.json()
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     let total = 0
     const orderItemsData = body.items.map((item) => {
-      const product = products.find((p) => p.id === item.productId)
+      const product = products.find((p) => p.id === Number(item.productId))
       if (!product) {
         throw new Error(`Product not found: ${item.productId}`)
       }
@@ -35,9 +36,11 @@ export async function POST(request: NextRequest) {
       total += itemTotal
 
       return {
-        productId: item.productId,
         quantity: item.quantity,
         price: product.price,
+        product: {
+          connect: { id: Number(item.productId) },
+        },
       }
     })
 
